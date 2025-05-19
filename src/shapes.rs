@@ -1,5 +1,6 @@
 #![allow(dead_code)]
-use core::f32;
+use core::{f32, f64};
+use reikna::{func, integral::*};
 
 pub trait ShapeLike {
     fn num_sides(&self) -> u32;
@@ -46,10 +47,15 @@ pub trait EllipseLike: ShapeLike {
     fn radius_major(&self) -> f32;
     /// The circumference of the ellipse
     fn circumference(&self) -> f32;
+    /// The eccentricity of the ellipse
+    fn eccentricity(&self) -> f32 {
+        (1.0 - self.radius_minor().powi(2) / self.radius_major().powi(2)).sqrt()
+    }
 }
 
 pub trait CircleLike: EllipseLike {
     fn radius(&self) -> f32;
+    
 }
 
 /// Shape
@@ -296,12 +302,12 @@ struct Ellipse {
 }
 
 impl Ellipse {
-    fn new(radius1: f32, radius2: f32) -> Self {
+    pub fn new(radius1: f32, radius2: f32) -> Self {
         Self {
             radius1,
             radius2
         }
-    }    
+    }
 }
 
 impl ShapeLike for Ellipse {
@@ -329,9 +335,9 @@ impl EllipseLike for Ellipse {
 
     /// Not implemented yet
     fn circumference(&self) -> f32 {
-        // let eccentricity = (1.0 - self.radius_minor().powi(2) / self.radius_major().powi(2)).sqrt();
-        // let f = |theta: f32| (1.0 - eccentricity.powi(2) * (theta.sin()).powi(2)).sqrt();
-        // 4.0 * self.radius_major() * integral(0, f32::consts::PI, f)
+        // let e_squared = self.eccentricity().powi(2) as f64;
+        // let f = |theta: f64| (1.0 - e_squared * theta.sin().powi(2)).sqrt();
+        // 4.0 * self.radius_major() * integrate(&func!(f), 0.0, f64::consts::PI / 2.0) as f32
         0.0
     }
 }
