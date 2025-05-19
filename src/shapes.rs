@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use core::f32;
 
 pub trait ShapeLike {
@@ -51,6 +52,7 @@ pub trait CircleLike: EllipseLike {
     fn radius(&self) -> f32;
 }
 
+/// Shape
 #[derive(PartialEq, Clone)]
 pub struct Shape {
     sides: u32,
@@ -74,6 +76,7 @@ impl ShapeLike for Shape {
     fn area(&self) -> f32 { self.area }
 }
 
+/// Rectangle
 #[derive(PartialEq, Clone)]
 pub struct Rectangle {
     width: f32,
@@ -108,6 +111,7 @@ impl RectangleLike for Rectangle {
     fn height(&self) -> f32 { self.height }
 }
 
+/// Square
 #[derive(PartialEq, Clone)]
 pub struct Square {
     side_length: f32
@@ -137,6 +141,7 @@ impl SquareLike for Square {
     fn side_length(&self) -> f32 { self.side_length }
 }
 
+/// Triangle
 #[derive(PartialEq, Clone)]
 pub struct Triangle {
     side1: f32,
@@ -175,6 +180,7 @@ impl TriangleLike for Triangle {
     fn side3_length(&self) -> f32 { self.side3 }
 }
 
+/// ScaleneTriangle
 #[derive(PartialEq, Clone)]
 pub struct ScaleneTriangle {
     tri: Triangle,
@@ -202,6 +208,7 @@ impl TriangleLike for ScaleneTriangle {
 
 impl ScaleneTriangleLike for ScaleneTriangle {}
 
+/// IsocelesTriangle
 #[derive(PartialEq, Clone)]
 pub struct IsocelesTriangle {
     base_length: f32,
@@ -242,6 +249,7 @@ impl IsocelesTriangleLike for IsocelesTriangle {
     fn sides_length(&self) -> f32 { self.sides_length }
 }
 
+/// EquilateralTriangle
 #[derive(PartialEq, Clone)]
 pub struct EquilateralTriangle {
     side: f32,
@@ -280,6 +288,7 @@ impl EquilateralTriangleLike for EquilateralTriangle {
     
 }
 
+/// Ellipse
 #[derive(PartialEq, Clone)]
 struct Ellipse {
     radius1: f32,
@@ -324,6 +333,7 @@ impl EllipseLike for Ellipse {
     }
 }
 
+/// Circle
 #[derive(PartialEq, Clone)]
 struct Circle {
     radius: f32,
