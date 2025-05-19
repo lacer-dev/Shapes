@@ -41,9 +41,9 @@ pub trait EquilateralTriangleLike: TriangleLike {
 
 pub trait EllipseLike: ShapeLike {
     /// The length of the smaller radius of the ellipse
-    fn radius_small(&self) -> f32;
+    fn radius_minor(&self) -> f32;
     /// The length of the bigger radius of the ellipse
-    fn radius_big(&self) -> f32;
+    fn radius_major(&self) -> f32;
     /// The circumference of the ellipse
     fn circumference(&self) -> f32;
 }
@@ -314,21 +314,24 @@ impl ShapeLike for Ellipse {
     }
 
     fn area(&self) -> f32 {
-        f32::consts::PI * self.radius_big() * self.radius_small()
+        f32::consts::PI * self.radius_major() * self.radius_minor()
     }
 }
 
 impl EllipseLike for Ellipse {
-    fn radius_big(&self) -> f32 {
+    fn radius_major(&self) -> f32 {
         self.radius1.max(self.radius2)
     }
 
-    fn radius_small(&self) -> f32 {
+    fn radius_minor(&self) -> f32 {
         self.radius1.min(self.radius2)
     }
 
     /// Not implemented yet
     fn circumference(&self) -> f32 {
+        // let eccentricity = (1.0 - self.radius_minor().powi(2) / self.radius_major().powi(2)).sqrt();
+        // let f = |theta: f32| (1.0 - eccentricity.powi(2) * (theta.sin()).powi(2)).sqrt();
+        // 4.0 * self.radius_major() * integral(0, f32::consts::PI, f)
         0.0
     }
 }
@@ -362,11 +365,11 @@ impl ShapeLike for Circle {
 }
 
 impl EllipseLike for Circle {
-    fn radius_big(&self) -> f32 {
+    fn radius_major(&self) -> f32 {
         self.radius()
     }
 
-    fn radius_small(&self) -> f32 {
+    fn radius_minor(&self) -> f32 {
         self.radius()
     }
 
