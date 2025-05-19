@@ -1,17 +1,39 @@
 #![allow(dead_code)]
-use core::{f32, f64};
-use reikna::{func, integral::*};
+use core::f32;
+use util::
+// use reikna::{func, integral::*};
 
 pub trait ShapeLike {
     fn num_sides(&self) -> u32;
     fn perimeter(&self) -> f32;
     fn area(&self) -> f32;
+
+    fn semiperimeter(&self) -> f32 {
+        self.perimeter() / 2.0
+    }
 }
 
-pub trait RectangleLike: ShapeLike {
+pub trait QuadrilateralLike: ShapeLike {
+    fn diagonal1(&self) -> f32;
+    fn diagonal2(&self) -> f32;
+    
+    fn long_diagonal(&self) -> f32 {
+        self.diagonal1().max(self.diagonal2())
+    }
+
+    fn short_diagonal(&self) -> f32 {
+        self.diagonal1().min(self.diagonal2())
+    }
+}
+
+pub trait RectangleLike: QuadrilateralLike {
     fn width(&self) -> f32;
     fn height(&self) -> f32;
-
+    
+    fn diagonal(&self) -> f32 {
+        (self.width().powi(2) + self.height().powi(2)).sqrt()
+    }
+    
     fn is_square(&self) -> bool {
         self.width() == self.height()
     }
@@ -25,6 +47,18 @@ pub trait TriangleLike: ShapeLike {
     fn side1_length(&self) -> f32;
     fn side2_length(&self) -> f32;
     fn side3_length(&self) -> f32;
+
+    fn short_side_length(&self) -> f32 {
+        min_of_three(self.side1_length(), self.side2_length(), self.side3_length())
+    }
+
+    fn mid_side_length(&self) -> f32 {
+        mid_of_three(self.side1_length(), self.side2_length(), self.side3_length())
+    }
+
+    fn long_side_length(&self) -> f32 {
+        max_of_three(self.side1_length(), self.side2_length(), self.side3_length())
+    }
 }
 
 pub trait ScaleneTriangleLike: TriangleLike {
@@ -56,6 +90,14 @@ pub trait EllipseLike: ShapeLike {
 pub trait CircleLike: EllipseLike {
     fn radius(&self) -> f32;
     
+}
+
+pub trait TrapezoidLike: QuadrilateralLike {
+    fn height(&self) -> f32;
+    fn long_base_length(&self) -> f32;
+    fn short_base_length(&self) -> f32;
+    fn long_leg_length(&self) -> f32;
+    fn short_leg_length(&self) -> f32;
 }
 
 /// Shape
@@ -112,6 +154,16 @@ impl ShapeLike for Rectangle {
     }
 }
 
+impl QuadrilateralLike for Rectangle {
+    fn diagonal1(&self) -> f32 {
+        self.diagonal()
+    }
+    
+    fn diagonal2(&self) -> f32 {
+        self.diagonal()
+    }
+}
+
 impl RectangleLike for Rectangle {
     fn width(&self) -> f32 { self.width }
     fn height(&self) -> f32 { self.height }
@@ -129,6 +181,12 @@ impl Square {
             side_length
         }
     }
+
+    pub fn from_area(area: f32) -> Self {
+        Self {
+            side_length: area.sqrt()
+        }
+    }
 }
 
 impl ShapeLike for Square {
@@ -137,10 +195,23 @@ impl ShapeLike for Square {
     fn area(&self) -> f32 { self.side_length().powi(2) }
 }
 
+impl QuadrilateralLike for Square {
+    fn diagonal1(&self) -> f32 {
+        self.diagonal()
+    }
+    
+    fn diagonal2(&self) -> f32 {
+        self.diagonal()
+    }    
+}
+
 impl RectangleLike for Square {
     fn width(&self) -> f32 { self.side_length }
     fn height(&self) -> f32 { self.side_length }
     fn is_square(&self) -> bool { true }
+    fn diagonal(&self) -> f32 {
+        (self.side_length.powi(2) + self.side_length.powi(2)).sqrt()
+    }
 }
 
 impl SquareLike for Square {
@@ -387,5 +458,126 @@ impl EllipseLike for Circle {
 impl CircleLike for Circle {
     fn radius(&self) -> f32 {
         self.radius
+    }
+}
+
+// Trapezoid
+#[derive(PartialEq, Clone)]
+struct Trapezoid {
+    height: f32,
+    base1: f32,
+    base2: f32,
+    leg1: f32,
+    leg2: f32
+}
+
+impl Trapezoid {
+    pub fn new_isoceles(height: f32, base1: f32, base2: f32) -> Self {
+        let legs_length = Trapezoid::legs_from_height_and_bases(height, base1, base2);
+        Self {
+            height,
+            base1,
+            base2,
+            leg1: legs_length,
+            leg2: legs_length
+        }
+    }
+
+    pub fn new_scalene(base1: f32, base2: f32, leg1: f32, leg2: f32) -> Self {
+        Self {
+            height: Trapezoid::height_from_sides(base1, base2, leg1, leg2),
+            base1,
+            base2,
+            leg1,
+            leg2,
+        }
+    }
+
+    fn area_from_height_and_bases(h: f32, b1: f32, b2: f32) -> f32 {
+        (b1 + b2) * h / 2.0
+    }
+    
+    fn area_from_sides(b1: f32, b2: f32, l1: f32, l2: f32) -> f32 {
+        let a = b1.min(b2);
+        let b = b1.max(b2);
+        let multiplier = (a + b) / (4.0 * (b - a).abs());
+        let multiplicand = ((-a + b + l1 + l2) 
+            * (a - b + l1 + l2) 
+            * (a - b + l1 - l2) 
+            * (a - b - l1 + l2)).sqrt();
+        multiplier * multiplicand
+    }
+
+    fn legs_from_height_and_bases(h: f32, b1: f32, b2: f32) -> f32 {
+        (h.powi(2) + ((b1 - b2) / 2.0).powi(2)).sqrt()
+    }
+
+    fn height_from_sides(a: f32, b: f32, c: f32, d: f32) -> f32 {
+        let p = a + b + c + d;
+        let numerator_squared = (p - 2.0 * a) 
+            * (p - 2.0 * b) 
+            * (p - 2.0 * b - 2.0 * d) 
+            * (p - 2.0 * b - 2.0 * c);
+        let numerator = numerator_squared.sqrt();
+        let denominator = 2.0 * (b - a).sqrt();
+        numerator / denominator
+    }
+}
+ 
+impl ShapeLike for Trapezoid {
+    fn num_sides(&self) -> u32 {
+        return 4;
+    }
+
+    fn perimeter(&self) -> f32 {
+        self.base1 + self.base2 + self.leg1 + self.leg2
+    }
+
+    fn area(&self) -> f32 {
+        Trapezoid::area_from_height_and_bases(self.height, self.base1, self.base2)
+    }
+}
+
+impl QuadrilateralLike for Trapezoid {
+    fn diagonal1(&self) -> f32 {
+        let a = self.short_base_length();
+        let b = self.long_base_length();
+        let c = self.leg1;
+        let d = self.leg2;
+        let numerator = a * b.powi(2) - a.powi(2) * b - a * c.powi(2) + b * d.powi(2);
+        let denominator = b - a;
+        (numerator / denominator).sqrt()
+    }
+    
+    fn diagonal2(&self) -> f32 {
+        let a = self.short_base_length();
+        let b = self.long_base_length();
+        let c = self.leg1;
+        let d = self.leg2;
+        let numerator = a * b.powi(2) - a.powi(2) * b - a * d.powi(2) + b * c.powi(2);
+        let denominator = b - a;
+        (numerator / denominator).sqrt()
+    }
+}
+
+impl TrapezoidLike for Trapezoid {
+    fn height(&self) -> f32 {
+        self.height
+    }
+
+    fn long_base_length(&self) -> f32 {
+        self.base1.max(self.base2)   
+    }
+
+    fn short_base_length(&self) -> f32 {
+        self.base1.min(self.base2)
+    }
+
+    fn long_leg_length(&self) -> f32 {
+        self.leg1.max(self.leg2)
+    }
+
+    fn short_leg_length(&self) -> f32 {
+        self.leg1.min(self.leg2)
     }
 }
